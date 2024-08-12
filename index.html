@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-size: cover;
+            background-position: center;
+            color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 0;
+            margin: 0;
+            position: relative;
+        }
+        #quiz-container {
+            max-height: 100%; 
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.7); /* Transparent background */
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            width: 600px;
+        }
+        .question {
+            margin-bottom: 15px;
+        }
+        .answer {
+            margin-bottom: 5px;
+        }
+        .answer label {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .answer input:checked + label {
+            background-color: #ddd;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        .underline {
+            text-decoration: underline;
+        }
+        .sidebar {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 20px;
+            width: 200px;
+        }
+        .quiz-controls {
+            background: rgba(255, 255, 255, 0.7); /* Transparent background */
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .quiz-controls button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .quiz-controls button:hover {
+            background-color: #f0f0f0;
+        }
+        #result {
+            background: rgba(255, 255, 255, 0.7); /* Transparent background */
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            text-align: center;
+        }
+        #title-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.5); /* Transparent background */
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="title-panel">Quiz Kształcenie Literackie Hubcio</div>
+    <div id="quiz-container"></div>
+    <div class="sidebar">
+        <div class="quiz-controls">
+            <button onclick="checkAnswers()">Sprawdź odpowiedzi</button>
+            <button onclick="retryQuiz()">Spróbuj ponownie</button>
+            <button onclick="refreshPage()">Odśwież</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const allQuestions = [
+    { question: "Jakie są trzy główne rodzaje literackie?", answers: ["Epika, liryka, dramat", "Komedia, tragedia, sonet", "Proza, poezja, esej"], correct: 0 },
+    { question: "Wymień cechy charakterystyczne epiki.", answers: ["Dialogi i monologi", "Narracja i fabuła", "Didaskalia i akty"], correct: 1 },
+    { question: "Co wyróżnia dramat jako rodzaj literacki?", answers: ["Obecność narratora", "Obecność aktów i scen", "Opis przyrody"], correct: 1 },
+    { question: "Do jakiego rodzaju literackiego należy komedia?", answers: ["Epika", "Liryka", "Dramat"], correct: 2 },
+    { question: "Wskaż gatunek literacki, do którego należy fraszka.", answers: ["Epika", "Liryka", "Dramat"], correct: 1 },
+    { question: "Co to jest sonet i jakie są jego cechy?", answers: ["Gatunek epicki, pisany prozą", "Gatunek liryczny, składający się z 14 wersów", "Gatunek dramatyczny, złożony z aktów"], correct: 1 },
+    { question: "Jakie elementy składają się na dramat?", answers: ["Narracja, opis, dialog", "Akt, scena, didaskalia", "Rym, rytm, wers"], correct: 1 },
+    { question: "Co to są didaskalia?", answers: ["Część dialogu w dramacie", "Opisy sceniczne w tekście dramatycznym", "Wstęp do powieści"], correct: 1 },
+    { question: "Czym różni się monolog od dialogu?", answers: ["Monolog to rozmowa dwóch osób, dialog to wypowiedź jednej osoby", "Monolog to wypowiedź jednej osoby, dialog to rozmowa dwóch lub więcej osób", "Monolog to opis przyrody, dialog to rozmowa bohaterów"], correct: 1 },
+    { question: "Wskaż w zdaniu neologizm: \"Wczoraj wymyśliłem nową zabawkę - skakoskręt.\"", answers: ["Wczoraj", "Zabawka", "Skakoskręt"], correct: 2 },
+    { question: "Co to jest eufemizm i podaj przykład.", answers: ["Przesadne wyolbrzymienie", "Łagodniejsze określenie czegoś nieprzyjemnego", "Bezpośrednie wyrażenie emocji"], correct: 1 },
+    { question: "Wyjaśnij, czym jest porównanie homeryckie.", answers: ["Krótkie porównanie bez użycia \"jak\"", "Rozbudowane porównanie, często używane w epopei", "Porównanie oparte na mitologii"], correct: 1 },
+    { question: "Co to jest inwokacja?", answers: ["Wstęp do dramatu", "Prośba skierowana do bóstwa lub muzy na początku utworu", "Krótka notatka autora"], correct: 1 },
+    { question: "Jakie funkcje pełni symbol w literaturze?", answers: ["Przekazuje dosłowne znaczenie", "Reprezentuje ukryte treści i idee", "Służy jako ozdoba językowa"], correct: 1 },
+    { question: "Czym różni się symbol od alegorii?", answers: ["Symbol ma jedno znaczenie, alegoria wiele", "Symbol jest bardziej dosłowny, alegoria bardziej abstrakcyjna", "Symbol jest wieloznaczny, alegoria ma jedno ustalone znaczenie"], correct: 2 },
+    { question: "Co to jest komizm?", answers: ["Element wzbudzający strach", "Element wzbudzający śmiech", "Element wzbudzający smutek"], correct: 1 },
+    { question: "Jakie są rodzaje komizmu?", answers: ["Komizm sytuacyjny, słowny, postaci", "Komizm historyczny, literacki, naukowy", "Komizm dramatyczny, epicki, liryczny"], correct: 0 },
+    { question: "Wskaż przykład ironii w życiu codziennym.", answers: ["\"Ależ dziś piękna pogoda!\" (gdy pada deszcz)", "\"To naprawdę trudne zadanie!\" (gdy jest łatwe)", "\"Jestem tak zmęczony, że mogę biegać maraton.\""], correct: 0 },
+    { question: "Jakie funkcje pełni ironia w tekście?", answers: ["Dodaje powagi", "Wzbudza śmiech lub refleksję", "Służy jako opis przyrody"], correct: 1 },
+    { question: "Co to są problemy egzystencjalne?", answers: ["Problemy związane z codziennymi obowiązkami", "Problemy dotyczące sensu życia i istnienia", "Problemy związane z nauką i techniką"], correct: 1 },
+    { question: "Jakie wartości estetyczne mogą mieć teksty literackie?", answers: ["Piękno języka, forma artystyczna", "Dokładność naukowa, precyzja danych", "Funkcjonalność, użyteczność"], correct: 0 },
+    { question: "Jakie uniwersalne wartości możesz znaleźć w literaturze?", answers: ["Prawda, piękno, dobro", "Szybkość, siła, wydajność", "Logika, matematyka, nauka"], correct: 0 },
+    { question: "Jakie znaczenie ma kontekst biograficzny w interpretacji utworu?", answers: ["Pomaga zrozumieć życie autora i jego wpływ na dzieło", "Służy jako ozdoba językowa", "Nie ma znaczenia dla interpretacji"], correct: 0 },
+    { question: "Co to jest kontekst historycznoliteracki?", answers: ["Analiza językowa tekstu", "Związek utworu z czasami, w których powstał", "Opis przyrody w literaturze"], correct: 1 },
+    { question: "Jakie elementy kultury mogą pomóc w interpretacji tekstów literackich?", answers: ["Sztuka, religia, tradycje", "Technologia, nauka, przemysł", "Sport, rekreacja, hobby"], correct: 0 },
+    { question: "Dlaczego ważne jest rozumienie kontekstów społecznych w literaturze?", answers: ["Pomaga zrozumieć relacje między bohaterami", "Służy jako ozdoba językowa", "Nie ma znaczenia dla interpretacji"], correct: 0 },
+    { question: "Jak przygotować się do recytacji utworu literackiego?", answers: ["Zapamiętać tekst i zrozumieć jego emocje", "Skupić się na szybkości mówienia", "Skoncentrować się na gestykulacji"], correct: 0 },
+    { question: "Co to jest tekst publicystyczny?", answers: ["Tekst naukowy", "Tekst informacyjny lub opiniotwórczy", "Tekst literacki"], correct: 1 },
+    { question: "Jakie informacje można znaleźć w tekście popularnonaukowym?", answers: ["Opisy przyrody", "Dane naukowe przedstawione w przystępny sposób", "Fikcyjne historie"], correct: 1 },
+    { question: "Czym różni się artykuł naukowy od popularnonaukowego?", answers: ["Artykuł naukowy jest bardziej szczegółowy i formalny", "Artykuł popularnonaukowy jest bardziej szczegółowy i formalny", "Oba są takie same"], correct: 0 },
+    { question: "Jakie są cechy reportażu?", answers: ["Fikcyjna opowieść z narratorem", "Relacja z wydarzeń, często z elementami osobistych obserwacji", "Krótki wiersz o humorystycznym charakterze"], correct: 1 },
+    { question: "Co to jest felieton?", answers: ["Krótki artykuł wyrażający subiektywne opinie autora", "Długi esej naukowy", "Opis przyrody"], correct: 0 },
+    { question: "Jakie funkcje pełnią różne gatunki dziennikarskie?", answers: ["Informowanie, komentowanie, rozrywka", "Fikcja, narracja, dramatyzacja", "Opis, analiza, wnioskowanie"], correct: 0 },
+    { question: "Jakie wartości estetyczne mogą mieć teksty kultury?", answers: ["Piękno formy, innowacyjność, emocjonalność", "Dokładność naukowa, precyzja danych", "Funkcjonalność, użyteczność"], correct: 0 },
+    { question: "Jak rozpoznać nawiązania do tradycyjnych wątków literackich w filmie?", answers: ["Analizując dialogi i fabułę", "Skupiając się na efektach specjalnych", "Koncentrując się na muzyce"], correct: 0 },
+    { question: "Czym różni się literatura piękna od naukowej?", answers: ["Literatura piękna skupia się na estetyce i emocjach, naukowa na faktach", "Literatura piękna jest bardziej formalna, naukowa mniej", "Oba rodzaje są takie same"], correct: 0 },
+    { question: "Jakie cechy ma literatura popularnonaukowa?", answers: ["Skupia się na emocjach i fabule", "Przedstawia wiedzę naukową w przystępny sposób", "Jest pełna fikcyjnych postaci"], correct: 1 },
+    { question: "Co to jest alegoria?", answers: ["Krótkie, dosłowne wyrażenie", "Rozbudowane porównanie", "Obrazowe przedstawienie idei za pomocą symbolicznych postaci i wydarzeń"], correct: 2 },
+    { question: "Wskaż w zdaniu alegorię: \"Lis jest symbolem przebiegłości.\"", answers: ["Lis", "Symbolem", "Przebiegłości"], correct: 0 },
+    { question: "Jakie elementy sztuki można interpretować?", answers: ["Obraz, rzeźba, fotografia", "Tylko obrazy", "Tylko rzeźby"], correct: 0 },
+    { question: "Co to jest epopeja?", answers: ["Krótki wiersz liryczny", "Długi utwór epicki o ważnych wydarzeniach historycznych", "Dramat o tematyce społecznej"], correct: 1 },
+    { question: "Jakie cechy ma tragedia?", answers: ["Wesoła fabuła, szczęśliwe zakończenie", "Poważna fabuła, często nieszczęśliwe zakończenie", "Fikcyjna opowieść z narratorem"], correct: 1 },
+    { question: "Co to jest tren?", answers: ["Utwór żałobny poświęcony zmarłej osobie", "Krótki wiersz humorystyczny", "Długi poemat epicki"], correct: 0 },
+    { question: "Jakie cechy ma ballada?", answers: ["Opowiada historię, często z elementami fantastyki", "Jest krótka i humorystyczna", "Skupia się na opisie przyrody"], correct: 0 },
+    { question: "Wskaż w zdaniu porównanie homeryckie: \"Biegł szybko niczym wiatr.\"", answers: ["Biegł", "Szybko", "Niczym wiatr"], correct: 2 },
+    { question: "Co to jest pamiętnik i jakie są jego cechy?", answers: ["Fikcyjna opowieść o przygodach", "Osobiste zapiski autora o jego życiu", "Krótki wiersz liryczny"], correct: 1 },
+    { question: "Jakie cechy ma pieśń jako gatunek literacki?", answers: ["Ma stałą formę wierszowaną i jest przeznaczona do śpiewania", "Jest długa i epicka", "Jest krótka i humorystyczna"], correct: 0 },
+    { question: "Jakie znaczenie mają wartości narodowe w literaturze?", answers: ["Pomagają zrozumieć historyczne i kulturowe tło utworu", "Służą jako ozdoba językowa", "Nie mają znaczenia dla interpretacji"], correct: 0 },
+    { question: "Jakie znaczenie mają wartości religijne w literaturze?", answers: ["Pomagają zrozumieć duchowy i moralny kontekst utworu", "Służą jako ozdoba językowa", "Nie mają znaczenia dla interpretacji"], correct: 0 },
+    { question: "Jakie znaczenie mają wartości etyczne w literaturze?", answers: ["Pomagają zrozumieć moralne przesłanie utworu", "Służą jako ozdoba językowa", "Nie mają znaczenia dla interpretacji"], correct: 0 },
+    { question: "Jakie znaczenie mają wartości społeczne w literaturze?", answers: ["Pomagają zrozumieć relacje między bohaterami i ich otoczeniem", "Służą jako ozdoba językowa", "Nie mają znaczenia dla interpretacji"], correct: 0 },
+    { question: "Jakie znaczenie mają wartości estetyczne w literaturze?", answers: ["Pomagają docenić piękno formy i stylu utworu", "Służą jako ozdoba językowa", "Nie mają znaczenia dla interpretacji"], correct: 0 },
+    { question: "Co to jest tekst główny w dramacie?", answers: ["Opis przyrody", "Wypowiedzi bohaterów", "Notatki autora"], correct: 1 },
+    { question: "Jakie cechy ma wywiad jako gatunek dziennikarski?", answers: ["Jest fikcyjny i literacki", "Jest rozmową z osobą mającą coś ciekawego do powiedzenia", "Jest długim esejem naukowym"], correct: 1 },
+    { question: "Jakie cechy ma artykuł jako gatunek dziennikarski?", answers: ["Jest krótki i humorystyczny", "Przedstawia informacje lub opinię na dany temat", "Jest długą fikcyjną opowieścią"], correct: 1 },
+    { question: "Jakie cechy ma reportaż jako gatunek dziennikarski?", answers: ["Jest fikcyjny i literacki", "Jest relacją z rzeczywistych wydarzeń", "Jest krótkim wierszem lirycznym"], correct: 1 },
+    { question: "Jakie cechy ma felieton jako gatunek dziennikarski?", answers: ["Jest długim esejem naukowym", "Jest subiektywnym komentarzem na aktualne tematy", "Jest fikcyjną opowieścią"], correct: 1 },
+    { question: "Jakie funkcje pełni dialog w dramacie?", answers: ["Opisuje przyrodę", "Przedstawia bezpośrednie wypowiedzi bohaterów", "Służy jako wstęp do utworu"], correct: 1 },
+    { question: "Jakie znaczenie ma hierarchizacja wartości w interpretacji literatury?", answers: ["Pomaga zrozumieć, które wartości są najważniejsze w utworze", "Służy jako ozdoba językowa", "Nie ma znaczenia dla interpretacji"], correct: 0 }
+];
+
+   
+
+        const backgrounds = [
+    "https://mrwallpaper.com/images/high/flying-saucer-in-lost-in-space-1rc4kokuq0k6py94.webp",
+    "https://mrwallpaper.com/images/high/lost-in-space-season-2-2xd5l77fikba7tnb.webp",
+    "https://mrwallpaper.com/images/high/robot-model-b-9-in-lost-in-space-i944g9ebze4scvsg.webp",
+    "https://mrwallpaper.com/images/high/amazing-poster-of-lost-in-space-6u6gyqhbnu6su1tn.webp",
+    "https://mrwallpaper.com/images/high/a-robot-in-lost-in-space-seeie9q82l8tmwn9.webp",
+    "https://mrwallpaper.com/images/high/lost-in-space-and-a-planet-zo2s5hp9fd3r6qug.webp",
+    "https://mrwallpaper.com/images/high/lost-in-space-digital-poster-6vxmc0s0sln71lgy.webp",
+    "https://mrwallpaper.com/images/high/sci-fi-series-lost-in-space-nb3z15v3dafnhh7e.webp",
+    "https://mrwallpaper.com/images/high/lost-in-space-asteroid-explosion-lll0nh8rkjwvnglh.webp",
+    "https://mrwallpaper.com/images/high/lost-in-space-tv-series-pf7djfv3t5svtuz5.webp"
+];
+
+
+        let currentQuestions = [];
+
+        function getRandomQuestions() {
+            return allQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
+        }
+
+        function setTextColorBasedOnBackground(imageUrl) {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.src = imageUrl;
+
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                let r = 0, g = 0, b = 0;
+
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    r += imageData.data[i];
+                    g += imageData.data[i + 1];
+                    b += imageData.data[i + 2];
+                }
+
+                const pixelCount = img.width * img.height;
+                r = r / pixelCount;
+                g = g / pixelCount;
+                b = b / pixelCount;
+
+                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+                document.body.style.color = brightness > 128 ? '#000' : '#fff';
+            };
+        }
+
+        function refreshBackground() {
+            const randomIndex = Math.floor(Math.random() * backgrounds.length);
+            const selectedBackground = backgrounds[randomIndex];
+            document.body.style.backgroundImage = `url(${selectedBackground})`;
+            setTextColorBasedOnBackground(selectedBackground);
+        }
+
+        function loadQuestions() {
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = currentQuestions.map((q, index) => `
+                <div class="question">
+                    <p>${index + 1}. ${q.question}</p>
+                    ${q.answers.map((answer, i) => `
+                        <div class="answer">
+                            <input type="radio" name="question${index}" id="question${index}answer${i}" value="${i}">
+                            <label for="question${index}answer${i}">${answer}</label>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+
+        function checkAnswers() {
+            const resultContainer = document.getElementById('result');
+            let score = 0;
+
+            currentQuestions.forEach((question, qIndex) => {
+                const selectedAnswer = document.querySelector(`input[name="question${qIndex}"]:checked`);
+                if (selectedAnswer) {
+                    const selectedValue = parseInt(selectedAnswer.value);
+                    const correctAnswer = question.correct;
+
+                    const answerLabels = document.querySelectorAll(`input[name="question${qIndex}"] + label`);
+                    answerLabels.forEach((label, aIndex) => {
+                        if (aIndex === correctAnswer) {
+                            label.classList.add('correct');
+                            label.classList.add('underline');
+                        } else if (aIndex === selectedValue) {
+                            label.classList.add('incorrect');
+                        }
+                    });
+
+                    if (selectedValue === correctAnswer) {
+                        score++;
+                    }
+                }
+            });
+
+            const motivationalMessage = getMotivationalMessage(score);
+            resultContainer.innerHTML = `Wynik: ${score}/10<br>${motivationalMessage}`;
+        }
+
+        function getMotivationalMessage(score) {
+            if (score === 10) {
+                return "Niesamowite! Jesteś jak Will – nie do pokonania!! Kochamy Cię!";
+            } else if (score >= 7) {
+                return "Super! Jak Penny, zawsze znajdziesz sposób na sukces!";
+            } else if (score >= 5) {
+                return "Nieźle! Jak Don, zawsze masz asa w rękawie! ";
+            } else {
+                return "Nie poddawaj się! Jak robot, nigdy nie przestajesz się uczyć!";
+            }
+        }
+
+        function retryQuiz() {
+            document.querySelectorAll('.answer label').forEach(label => {
+                label.classList.remove('correct', 'incorrect', 'underline');
+            });
+            document.querySelectorAll('input[type="radio"]').forEach(input => {
+                input.checked = false;
+            });
+            document.getElementById('result').innerHTML = ""; // Zresetuj wynik
+        }
+
+        function refreshPage() {
+            refreshBackground();
+            currentQuestions = getRandomQuestions();
+            loadQuestions();
+        }
+
+        // Load initial questions and background
+        refreshBackground();
+        currentQuestions = getRandomQuestions();
+        loadQuestions();
+    </script>
+</body>
+</html>
